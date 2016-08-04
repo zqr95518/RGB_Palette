@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!--suppress JSJQueryEfficiency -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet">
+    <link href="css/animate.min.css" rel="stylesheet">
+    <link href="css/style.min.css?v=3.2.0" rel="stylesheet">
+    <script src="js/jquery.js"></script>
+    <script src="js/json2.js"></script>
+    <script src="js/angular-1.0.1.min.js"></script>
+    <title>RGB调色板</title>
+    <script>
+        var datas = [{"name":"aaa","color":"#aaaaaa"}];
+        function checkrange(e) {
+            if(Number(e)>255){
+                $("#warn").text("数字不应大于255")
+            }else if(Number(e)<0){
+                $("#warn").text("数字不应小于0")
+            }else{
+                $("#warn").text("")
+            }
+        }
+        function cast16(e) {
+            if(Number(e)<10){
+                return "0"+Number(e).toString(16)
+            }else {
+                return Number(e).toString(16)
+            }
+        }
+        function getcurrectcolor() {
+            $("#red_hex").text(function () {
+                return cast16($ ("#red").val());
+            });
+            $("#green_hex").text(function () {
+                return cast16($ ("#green").val());
+            });
+            $("#blue_hex").text(function () {
+                return cast16($ ("#blue").val());
+            });
+            return newcolor = "#"+$("#red_hex").text()+$("#green_hex").text()+$("#blue_hex").text();
+        }
+        function fresh() {
+            $("#palette").css("background",getcurrectcolor());
+        }
+        
+        $ (function ()
+        {
+            $ ("#red").change (function ()
+            {
+                $("#red_text").val($ ("#red").val());
+                $("#warn").text("");
+                fresh();
+            });
+            $ ("#green").change (function ()
+            {
+                $("#green_text").val($ ("#green").val());
+                $("#warn").text("");
+                fresh();
+            });
+            $ ("#blue").change (function ()
+            {
+                $("#blue_text").val($ ("#blue").val());
+                $("#warn").text("");
+                fresh();
+            });
+            $ ("#red_text").change (function ()
+            {
+                $("#red").val($ ("#red_text").val());
+                checkrange($ ("#red_text").val());
+                fresh();
+            });
+            $ ("#green_text").change (function ()
+            {
+                $("#green").val($ ("#green_text").val());
+                checkrange($ ("#green_text").val());
+                fresh();
+            });
+            $ ("#blue_text").change (function ()
+            {
+                $("#blue").val($ ("#blue_text").val());
+                checkrange($ ("#blue_text").val());
+                fresh();
+            });
+            $("#save").click(function () {
+                if(confirm("是否保存？")){
+                    var tr = {"name":$("#name").val(),"color":getcurrectcolor()};
+                    datas[datas.length] = tr;
+                    var ele = document.querySelector("[ng-controller=tablectrl]");
+                    angular.element(ele).scope().update();
+                }
+
+            });
+        });
+        function deleterow(node) {
+            var recordtable = document.getElementById("recordtable");
+            var tr1 = node.parentNode.parentNode;
+            var e = tr1.rowIndex;
+            if(confirm("是否删除？")){
+                datas.splice(e-1,1);
+                var ele = document.querySelector("[ng-controller=tablectrl]");
+                angular.element(ele).scope().update();
+            }
+        }
+        function use(node) {
+            var tr1 = node.parentNode.parentNode;
+//            alert(tr1.cells[0].childNodes[0].value); //获取的方法一
+            var color = tr1.cells[3].innerText;
+            var name = tr1.cells[1].innerText;
+            $("#name").val(name);
+            var rgb = Sixteen2RGB(color);
+            $("#red").val(rgb[0]);
+            $("#green").val(rgb[1]);
+            $("#blue").val(rgb[2]);
+            $("#red_text").val($ ("#red").val());
+            $("#green_text").val($ ("#green").val());
+            $("#blue_text").val($ ("#blue").val());
+            fresh();
+        }
+        function Sixteen2RGB(a) {
+            if (a.substr(0, 1) == "#"){
+                a = a.substring(1);
+            }
+            b = [];
+            for (x = 0; x < 3; x++) {
+                b[0] = a.substr(x * 2, 2);
+                b[3] = "0123456789abcdef";
+                b[1] = b[0].substr(0, 1);
+                b[2] = b[0].substr(1, 1);
+                b[20 + x] = b[3].indexOf(b[1]) * 16 + b[3].indexOf(b[2])
+            }
+            c = {0:b[20],1:b[21],2:b[22]};
+            return c;
+        }
+        function tablectrl($scope) {
+            $scope.update = function () {
+                $scope.records = datas;
+                $scope.$apply();
+            };
+            $scope.records = datas;
+        }
+    </script>
+</head>
+<body class="gray-bg">
+    <div class="wrapper wrapper-content animated fadeInRight" ng-app="">
+        <div class="row">
+            <h1 style="text-align: center">RGB调色板</h1>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-sm-offset-3">
+                <table class="table table-bordered">
+                    <tr>
+                        <td rowspan="3" id="palette" bgcolor="#000000"></td>
+                        <td><label class="control-label">红色：</label></td>
+                        <td><input type="range" id="red" max="255" min="0" step="1" value="0"></td>
+                        <td><input type="number" max="255" min="0" class="form-control" id="red_text" value="0"></td>
+                        <td><label class="control-label" style="width: 6px" id="red_hex">00</label></td>
+
+                    </tr>
+                    <tr>
+                        <td><label class="control-label">绿色：</label></td>
+                        <td><input type="range" id="green" max="255" min="0" step="1" value="0"></td>
+                        <td><input type="number" max="255" min="0" class="form-control" id="green_text" value="0"></td>
+                        <td><label class="control-label" style="width: 6px" id="green_hex">00</label></td>
+                    </tr>
+                    <tr>
+                        <td><label class="control-label">蓝色：</label></td>
+                        <td><input type="range" id="blue" max="255" min="0" step="1" value="0"></td>
+                        <td><input type="number" max="255" min="0" class="form-control" id="blue_text" value="0"></td>
+                        <td><label class="control-label" style="width: 6px" id="blue_hex">00</label></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="row col-sm-8 col-sm-offset-2">
+            <table class="table pull-right">
+                <tr>
+                    <td width="50%"><h3 style="text-align: center" id="warn">&nbsp;</h3></td>
+                    <td><label class="control-label pull-right">名称：</label></td>
+                    <td><input type="text" class="form-control pull-right" id="name"></td>
+                    <td><button class="spinner-buttons pull-right" id="save">保存当前配色</button></td>
+                </tr>
+            </table>
+        </div>
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2" ng-controller="tablectrl">
+                <table class="table table-bordered table-striped" id="recordtable">
+                    <tr class="alert-info">
+                        <th>#</th>
+                        <th>名称</th>
+                        <th>颜色</th>
+                        <th>颜色编码</th>
+                        <th>使用</th>
+                        <th>删除</th>
+                    </tr>
+                    <tr ng-repeat="x in records">
+                        <td>{{$index+1}}</td>
+                        <td>{{x.name}}</td>
+                        <td bgcolor="{{x.color}}"></td>
+                        <td>{{x.color}}</td>
+                        <td><button onclick="use(this)">使用</button></td>
+                        <td><button onclick="deleterow(this)">删除</button></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
