@@ -49,6 +49,30 @@
         
         $ (function ()
         {
+            $.event.special.valuechange = {
+
+                teardown: function (namespaces) {
+                    $(this).unbind('.valuechange');
+                },
+
+                handler: function (e) {
+                    $.event.special.valuechange.triggerChanged($(this));
+                },
+
+                add: function (obj) {
+                    $(this).on('keyup.valuechange cut.valuechange paste.valuechange input.valuechange',
+                            obj.selector, $.event.special.valuechange.handler)
+                },
+
+                triggerChanged: function (element) {
+                    var current = element[0].contentEditable === 'true' ? element.html() : element.val()
+                            , previous = typeof element.data('previous') === 'undefined' ? element[0].defaultValue : element.data('previous')
+                    if (current !== previous) {
+                        element.trigger('valuechange', [element.data('previous')])
+                        element.data('previous', current)
+                    }
+                }
+            }
             $ ("#red").change (function ()
             {
                 $("#red_text").val($ ("#red").val());
@@ -67,22 +91,22 @@
                 $("#warn").text("");
                 fresh();
             });
-            $ ("#red_text").change (function ()
+            $ ("#red_text").on('valuechange', function (e, previous)
             {
                 $("#red").val($ ("#red_text").val());
-                checkrange($ ("#red_text").val());
+ //               checkrange($ ("#red_text").val());
                 fresh();
             });
-            $ ("#green_text").change (function ()
+            $ ("#green_text").on('valuechange', function (e, previous)
             {
                 $("#green").val($ ("#green_text").val());
-                checkrange($ ("#green_text").val());
+//                checkrange($ ("#green_text").val());
                 fresh();
             });
-            $ ("#blue_text").change (function ()
+            $ ("#blue_text").on('valuechange', function (e, previous)
             {
                 $("#blue").val($ ("#blue_text").val());
-                checkrange($ ("#blue_text").val());
+//                checkrange($ ("#blue_text").val());
                 fresh();
             });
             $("#save").click(function () {
@@ -142,6 +166,24 @@
             };
             $scope.records = datas;
         }
+        function keyup(e){
+            e.value=e.value.replace(/\D/g,'');
+            if(e.value>255){
+                e.value = 255;
+            }else if(e.value<0){
+                e.value = 0;
+            }
+        }
+        function beforepaste(e){
+            var data = clipboardData.getData('text');
+            data = data.replace(/\D/g,'');
+            if(data>255){
+                data = 255;
+            }else if(data<0){
+                data = 0;
+            }
+            clipboardData.setData(data);
+        }
     </script>
 </head>
 <body class="gray-bg">
@@ -156,20 +198,23 @@
                         <td rowspan="3" id="palette" bgcolor="#000000"></td>
                         <td><label class="control-label">红色：</label></td>
                         <td><input type="range" id="red" max="255" min="0" step="1" value="0"></td>
-                        <td><input type="number" max="255" min="0" class="form-control" id="red_text" value="0"></td>
+                        <td><input type="text" onkeyup="keyup(this)" onbeforepaste="beforepaste(this)"
+                                   class="form-control" id="red_text" value="0"></td>
                         <td><label class="control-label" style="width: 6px" id="red_hex">00</label></td>
 
                     </tr>
                     <tr>
                         <td><label class="control-label">绿色：</label></td>
                         <td><input type="range" id="green" max="255" min="0" step="1" value="0"></td>
-                        <td><input type="number" max="255" min="0" class="form-control" id="green_text" value="0"></td>
+                        <td><input type="text" onkeyup="keyup(this)" onbeforepaste="beforepaste(this)"
+                                   class="form-control" id="green_text" value="0"></td>
                         <td><label class="control-label" style="width: 6px" id="green_hex">00</label></td>
                     </tr>
                     <tr>
                         <td><label class="control-label">蓝色：</label></td>
                         <td><input type="range" id="blue" max="255" min="0" step="1" value="0"></td>
-                        <td><input type="number" max="255" min="0" class="form-control" id="blue_text" value="0"></td>
+                        <td><input type="text" onkeyup="keyup(this)" onbeforepaste="beforepaste(this)"
+                                   class="form-control"id="blue_text" value="0"></td>
                         <td><label class="control-label" style="width: 6px" id="blue_hex">00</label></td>
                     </tr>
                 </table>
